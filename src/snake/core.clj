@@ -88,10 +88,8 @@
   Check for game end and if so marks"
   (println "this is the state : " state)
 
-
-
   (let [updated-state (assoc state :snake (move (:snake state) false)
-                                   :alive (complement (game-over (get-in state [:snake :body]))))]
+                                   :alive (not (game-over (get-in state [:snake :body]))))]
     (println update-state)
     updated-state))
 
