@@ -35,7 +35,7 @@
 
 (defn turn [snake new-direction]
   "changes the direction of the snake"
-  assoc snake :direction new-direction)
+  (assoc snake :direction new-direction))
 
 
 (declare new-head)
@@ -86,23 +86,21 @@
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
-  ;(move (:snake state) false)
-  state)
+  (println state)
+  (assoc state :snake (move (:snake state) false)))
 
 (defn key-pressed-handler [state {key-pressed :key}]
   "Updates the snakes direction flag with the new key press"
-  (let [updated-snake (turn (:snake state) key-pressed)]
-    (assoc-in state [:snake :direction] updated-snake)))
+  (let [cordinate-direction (key-to-direction key-pressed)
+        updated-snake (turn (:snake state) cordinate-direction)]
+    (assoc state :snake updated-snake)))
+
+(key-pressed-handler sample-state {:key :down})
 
 (defn cord-to-rect
   "converts cordinates on the snake grid to a rect to render"
   [[x y]]
   (list (* x grid-scale-factor) (* y grid-scale-factor) grid-scale-factor grid-scale-factor))
-
-
-(cord-to-rect [0 3])
-
-(key-pressed-handler (generate-game-state) {:key :left})
 
 ;quil impure
 
