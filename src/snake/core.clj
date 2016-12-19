@@ -2,7 +2,6 @@
   (:require [quil.core :as q]
             [quil.middleware :as m]))
 
-
 ;definitions
 ;note snake grid respresented as a kind of x/y cordinate system where each cell is either empty, contains
 ;part of the snake or the apple. The grid has bounds defined below. The origin is top left and down
@@ -19,13 +18,12 @@
   {:type     :apple,                                        ;to distinguish this map from snake map
    :location [(rand-int grid-width) (rand-int grid-height)]}) ;x/y cords or apple to render
 
-
-
 (defn generate-snake []
+
   {:type      :snake,                                       ;to distinguish this map from apple map
    :body      '([3 0] [2 0] [1 0] [0 0])                    ;the snakes position to render starting from head going to the tail
    :direction [1 0]})                                       ;represents direction snake should move on next tick, first
-;first column is x direction, second is y, negative y means
+                                                            ;first column is x direction, second is y, negative y means
 
 
 (defn generate-game-state []
@@ -72,13 +70,6 @@
     (> head-y grid-height)))
 
 
-(defn key-to-direction [key]
-  "converts from processing frameworks key event to a direction in the snake world"
-  (cond (= key :left) [-1 0]
-        (= key :right) [1 0]
-        (= key :up) [0 -1]
-        (= key :down) [0 1]))
-
 
 
 ;quil specific pure functions
@@ -89,10 +80,17 @@
   (println state)
   (assoc state :snake (move (:snake state) false)))
 
+(defn key-to-cord-direction [key]
+  "converts from quil framework key event to a direction in the snake world"
+  (cond (= key :left) [-1 0]
+        (= key :right) [1 0]
+        (= key :up) [0 -1]
+        (= key :down) [0 1]))
+
 (defn key-pressed-handler [state {key-pressed :key}]
   "Updates the snakes direction flag with the new key press"
-  (let [cordinate-direction (key-to-direction key-pressed)
-        updated-snake (turn (:snake state) cordinate-direction)]
+  (let [cord-direction (key-to-cord-direction key-pressed)
+        updated-snake (turn (:snake state) cord-direction)]
     (assoc state :snake updated-snake)))
 
 (key-pressed-handler sample-state {:key :down})
@@ -119,26 +117,11 @@
   ;setup fill for the snake
   (q/fill 190 20 50)
 
+  ;draw each cell of snake
   (let [body (get-in state [:snake :body])]
     (doseq [snake-cord body]
       (apply q/rect (cord-to-rect snake-cord))))
   )
-
-
-
-(defn get-strings [x]
-  (->> (range x)
-       (map #(str %))))
-
-(get-strings 5)
-
-(apply str (get-strings 5))
-
-  ; Set circle color.
-  ;(q/fill (:color state) 0 0)
-  ; Calculate x and y coordinates of the circle.)
-
-
 
 (q/defsketch snake
              :title "Snake 1, walls kill the snake"
