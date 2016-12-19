@@ -142,6 +142,15 @@
     (doseq [snake-cord body]
       (apply q/rect (cord-to-rect snake-cord)))))
 
+(defn display-game-over
+  "Shows a prompt"
+  []
+  (q/text-size 16)
+  (q/rect-mode :center)
+  (q/text-align :center)
+  (q/text "Game over press enter to retry" (/ screen-width 2) (/ screen-height 2) 100 100))
+  ;
+
 
 (q/defsketch snake
              :title "Snake 1, walls kill the snake"
