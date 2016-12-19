@@ -25,7 +25,6 @@
    :direction [1 0]})                                       ;represents direction snake should move on next tick, first
                                                             ;first column is x direction, second is y, negative y means
 
-
 (defn generate-game-state []
   {:snake (generate-snake)
    :apple (generate-apple)
@@ -34,7 +33,6 @@
 (defn turn [snake new-direction]
   "changes the direction of the snake"
   (assoc snake :direction new-direction))
-
 
 (declare new-head)
 
@@ -48,7 +46,8 @@
                (cons
                  (new-head (first body) direction)
                  (if is-eating
-                   body (butlast body)))))
+                   body
+                   (butlast body)))))
 
 
 (defn new-head
@@ -57,19 +56,29 @@
   [(+ old-head-x direction-x) (+ old-head-y direction-y)])
 
 
-(defn snake-head-intersects-body [[head & body]]
-  "check if the snake has hit itself, expects whole snake body as arg"
-  (contains? body head))
 
-(defn head-out-of-bounds [[head-x head-y]]
+(defn snake-head-intersects-body
+  "check if the snake has hit itself, expects whole snake body as arg"
+  [[head & body]]
+  (contains? (set body) head))
+
+(snake-head-intersects-body (:body (generate-snake)))
+
+(defn head-out-of-bounds
   "checks if snake is out of bounds expect the head of the snake cords as the arg"
+  [[head-x head-y]]
   (or
     (< head-x 0)
     (< head-y 0)
     (> head-x grid-width)
     (> head-y grid-height)))
 
-
+(defn game-over
+  "check for game over conditions"
+  [body]
+  (or
+    (snake-head-intersects-body body)
+    (head-out-of-bounds (first body))))
 
 
 ;quil specific pure functions
@@ -77,8 +86,23 @@
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
-  (println state)
-  (assoc state :snake (move (:snake state) false)))
+  (println "this is the state : " state)
+
+
+
+  (let [updated-state (assoc state :snake (move (:snake state) false)
+                                   :alive (complement (game-over (get-in state [:snake :body]))))]
+    (println update-state)
+    updated-state))
+
+(def state (generate-game-state))
+
+(def sample-map {:a 1 :b 2})
+
+(assoc sample-map :a 2 :b 5 :c 24)
+
+(move (:snake state) false)
+(update-state state)
 
 (defn key-to-cord-direction [key]
   "converts from quil framework key event to a direction in the snake world"
@@ -92,8 +116,6 @@
   (let [cord-direction (key-to-cord-direction key-pressed)
         updated-snake (turn (:snake state) cord-direction)]
     (assoc state :snake updated-snake)))
-
-(key-pressed-handler sample-state {:key :down})
 
 (defn cord-to-rect
   "converts cordinates on the snake grid to a rect to render"
@@ -120,8 +142,8 @@
   ;draw each cell of snake
   (let [body (get-in state [:snake :body])]
     (doseq [snake-cord body]
-      (apply q/rect (cord-to-rect snake-cord))))
-  )
+      (apply q/rect (cord-to-rect snake-cord)))))
+
 
 (q/defsketch snake
              :title "Snake 1, walls kill the snake"
