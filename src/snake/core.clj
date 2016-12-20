@@ -7,7 +7,7 @@
 ;part of the snake or the apple. The grid has bounds defined below. The origin is top left and down
 ;is positive in the y axis similar to mobile gui toolkits
 (def grid-width 30)
-(def grid-height 15)
+(def grid-height 16)
 (def grid-scale-factor 10)
 (def screen-width (* grid-width grid-scale-factor))
 (def screen-height (* grid-height grid-scale-factor))
@@ -87,10 +87,8 @@
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
   (println "this is the state : " state)
-
   (let [updated-state (assoc state :snake (move (:snake state) false)
                                    :alive (not (game-over (get-in state [:snake :body]))))]
-    (println update-state)
     updated-state))
 
 (def state (generate-game-state))
@@ -128,6 +126,23 @@
   (q/background 0)
   (generate-game-state))
 
+
+(defn draw-snake-body
+  "draws the snake at its current position"
+  [body]
+  ;(q/fill 0)
+  (doseq [snake-cord body]
+    (apply q/rect (cord-to-rect snake-cord))))
+
+(defn display-game-over
+  "Shows a prompt saying game over"
+  []
+  (q/text-size 16)
+  (q/rect-mode :center)
+  (q/text-align :center)
+  (q/text "Game over press enter to retry" (/ screen-width 2) (/ screen-height 2) 100 100))
+
+
 (defn draw-state [state]
   "draws the current state, main side affect point, the output is ignored"
 
@@ -135,21 +150,13 @@
   (q/background 0)
 
   ;setup fill for the snake
-  (q/fill 190 20 50)
+  (q/fill 100 100 100)
 
-  ;draw each cell of snake
-  (let [body (get-in state [:snake :body])]
-    (doseq [snake-cord body]
-      (apply q/rect (cord-to-rect snake-cord)))))
+  (if (:alive state)
+    (draw-snake-body (get-in state [:snake :body]))
+    (display-game-over)))
 
-(defn display-game-over
-  "Shows a prompt"
-  []
-  (q/text-size 16)
-  (q/rect-mode :center)
-  (q/text-align :center)
-  (q/text "Game over press enter to retry" (/ screen-width 2) (/ screen-height 2) 100 100))
-  ;
+
 
 
 (q/defsketch snake
