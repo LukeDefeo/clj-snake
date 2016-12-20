@@ -98,16 +98,19 @@
 
 ;quil specific pure functions
 
+
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
   (println "game-state " state)
   (if (:alive state)
-    (assoc state :snake (move (:snake state) false)
-                 :alive (not (game-over (get-in state [:snake :body]))))
+    (let [moved-state (assoc state :snake (move (:snake state) false))]
+      (assoc moved-state :alive (not (game-over (get-in moved-state [:snake :body]))))) ;need this nested let otherwise snake goes an extra step
     state))
 
+
 (def state (generate-game-state))
+state
 
 (def sample-map {:a 1 :b 2})
 
@@ -139,10 +142,26 @@
   (list (* x grid-scale-factor) (* y grid-scale-factor) grid-scale-factor grid-scale-factor))
 
 ;quil impure
+;
+;(take-while #(< % 4) [1 2 3 4 3 2 1])
+;(drop-while #(< % 4) [1 2 3 4 3 2 1])
+;(filter #(< % 4) [1 2 3 4 3 2 1])
+;(into [] (remove #(< % 4) [1 2 3 4 3 2 1]))
+;
+;(def lazy-filtered (filter #(< % 4) [1 2 3 4 3 2 1]))
+;
+;(defn the-truth [] true)
+;(def false-hood (complement the-truth))
+;(false-hood)
+;
+;(realized? lazy-filtered)
+;
+;(into)
+
 
 (defn setup []
   "setup basic things and returns the initial game state"
-  (q/frame-rate 1)
+  (q/frame-rate 10)
   (q/background 0)
   (generate-game-state))
 
@@ -152,12 +171,16 @@
   [body]
   ; Clear the previous snake by filling it with black color.
   (q/background 0)
+  ;setup fill for the snake
+  (q/fill 100 100 100)
   (doseq [snake-cord body]
     (apply q/rect (cord-to-rect snake-cord))))
 
 (defn display-game-over
   "Shows a prompt saying game over"
   []
+  ;setup fill for the text
+  (q/fill 200 20 20)
   (q/text-size 16)
   (q/rect-mode :center)
   (q/text-align :center)
@@ -168,8 +191,7 @@
   "draws the current state, main side affect point, the output is ignored"
 
 
-  ;setup fill for the snake
-  (q/fill 100 100 100)
+
 
   (if (:alive state)
     (draw-snake-body (get-in state [:snake :body]))
