@@ -30,7 +30,7 @@
    :apple (generate-apple)
    :alive true})
 
-(defn turn [snake new-direction]
+(defn turn-snake [snake new-direction]
   "changes the direction of the snake"
   (assoc snake :direction new-direction))
 
@@ -73,6 +73,21 @@
     (> head-x grid-width)
     (> head-y grid-height)))
 
+
+(defn opposite-directions? [[a-x a-y] [b-x b-y]]
+  "checks if two directions would are opposite and would cancel each other out
+  works by adding up the two vectors and checking they equal 0"
+  (and
+    (= (+ a-x b-x) 0)
+    (= (+ a-y b-y) 0)))
+
+;test cases
+(= true (opposite-directions? [1 0] [-1 0]))
+(= true (opposite-directions? [-1 1] [1 0]))
+(= true (opposite-directions? [0 1] [0 -1]))
+(= false (opposite-directions? [0 1] [1 0]))
+
+
 (defn game-over
   "check for game over conditions"
   [body]
@@ -110,9 +125,13 @@
 
 (defn key-pressed-handler [state {key-pressed :key}]
   "Updates the snakes direction flag with the new key press"
-  (let [cord-direction (key-to-cord-direction key-pressed)
-        updated-snake (turn (:snake state) cord-direction)]
-    (assoc state :snake updated-snake)))
+  (let [requested-cord-direction (key-to-cord-direction key-pressed)
+        current-cord-direction (get-in state [:snake :direction])]
+
+    (if (opposite-directions? current-cord-direction requested-cord-direction) ;dont turn the snake if the new key is the opposite direction
+      state
+      (assoc state :snake (turn-snake (:snake state) requested-cord-direction)))))
+
 
 (defn cord-to-rect
   "converts cordinates on the snake grid to a rect to render"
