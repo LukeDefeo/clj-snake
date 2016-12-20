@@ -86,7 +86,7 @@
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
-  (println "this is the state : " state)
+  (println "game-state " state)
   (if (:alive state)
     (assoc state :snake (move (:snake state) false)
                  :alive (not (game-over (get-in state [:snake :body]))))
@@ -131,7 +131,8 @@
 (defn draw-snake-body
   "draws the snake at its current position"
   [body]
-  ;(q/fill 0)
+  ; Clear the previous snake by filling it with black color.
+  (q/background 0)
   (doseq [snake-cord body]
     (apply q/rect (cord-to-rect snake-cord))))
 
@@ -147,8 +148,6 @@
 (defn draw-state [state]
   "draws the current state, main side affect point, the output is ignored"
 
-  ; Clear the sketch by filling it with black color.
-  (q/background 0)
 
   ;setup fill for the snake
   (q/fill 100 100 100)
