@@ -87,9 +87,10 @@
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
   (println "this is the state : " state)
-  (let [updated-state (assoc state :snake (move (:snake state) false)
-                                   :alive (not (game-over (get-in state [:snake :body]))))]
-    updated-state))
+  (if (:alive state)
+    (assoc state :snake (move (:snake state) false)
+                 :alive (not (game-over (get-in state [:snake :body]))))
+    state))
 
 (def state (generate-game-state))
 
