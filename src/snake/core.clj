@@ -24,12 +24,12 @@
 ;pure snake functions
 
 (defn generate-apple []
-  {:type     :apple,                                        ;to distinguish this map from snake map
+  {
    :location [(rand-int grid-width) (rand-int grid-height)]}) ;x/y cords or apple to render
 
 (defn generate-snake []
 
-  {:type      :snake,                                       ;to distinguish this map from apple map
+  {
    :body      '([3 0] [2 0] [1 0] [0 0])                    ;the snakes position to render starting from head going to the tail
    :direction [1 0]})                                       ;represents direction snake should move on next tick, first
                                                             ;first column is x direction, second is y, negative y means
@@ -183,15 +183,6 @@ state
   (generate-game-state))
 
 
-(defn draw-snake-body
-  "draws the snake at its current position"
-  [body]
-  ; Clear the previous snake by filling it with black color.
-  (q/background 0)
-  ;setup fill for the snake
-  (q/fill 100 100 100)
-  (doseq [snake-cord body]
-    (apply q/rect (cord-to-rect snake-cord))))
 
 (defn display-game-over
   "Shows a prompt saying game over"
@@ -203,15 +194,32 @@ state
   (q/text-align :center)
   (q/text "Game over press enter to retry" (/ screen-width 2) (/ screen-height 2) 100 100))
 
+(defn draw-snake-body
+  "draws the snake at its current position"
+  [body]
+  ;setup fill for the snake
+  (q/fill 100 100 100)
+  (doseq [snake-cord body]
+    (apply q/rect (cord-to-rect snake-cord))))
+
+(defn draw-apple [apple-location]
+  ;setup fill for the apple
+  (q/fill 20 200 80)
+
+  (apply q/rect (cord-to-rect apple-location)))
+
+
+(defn draw-game-playing [state]
+  ; Clear the previous state by filling it with black color.
+  (q/background 0)
+  (draw-snake-body (get-in state [:snake :body]))
+  (draw-apple (get-in state [:apple :location]))
+  )
 
 (defn draw-state [state]
   "draws the current state, main side affect point, the output is ignored"
-
-
-
-
   (if (:alive state)
-    (draw-snake-body (get-in state [:snake :body]))
+    (draw-game-playing state)
     (display-game-over)))
 
 
