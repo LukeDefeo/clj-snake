@@ -3,6 +3,14 @@
             [quil.middleware :as m]
             [clojure.core.match :as core]))
 
+
+;todo
+;1. add apples and growing of the snake
+;2. add pause feature
+;3. snake 2 rules
+;4. add abilty to change speed as part of difficultyl
+;5. publish to github
+
 ;definitions
 ;note snake grid respresented as a kind of x/y cordinate system where each cell is either empty, contains
 ;part of the snake or the apple. The grid has bounds defined below. The origin is top left and down
