@@ -1,6 +1,7 @@
 (ns snake.core
   (:require [quil.core :as q]
-            [quil.middleware :as m]))
+            [quil.middleware :as m]
+            [clojure.core.match :as core]))
 
 ;definitions
 ;note snake grid respresented as a kind of x/y cordinate system where each cell is either empty, contains
@@ -98,11 +99,10 @@
 
 ;quil specific pure functions
 
-
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
-  (println "game-state " state)
+  ;(println "game-state " state)
   (if (:alive state)
     (let [moved-state (assoc state :snake (move (:snake state) false))]
       (assoc moved-state :alive (not (game-over (get-in moved-state [:snake :body]))))) ;need this nested let otherwise snake goes an extra step
@@ -126,14 +126,23 @@ state
         (= key :up) [0 -1]
         (= key :down) [0 1]))
 
-(defn key-pressed-handler [state {key-pressed :key}]
-  "Updates the snakes direction flag with the new key press"
+(defn move-snake [key-pressed state]
   (let [requested-cord-direction (key-to-cord-direction key-pressed)
         current-cord-direction (get-in state [:snake :direction])]
 
     (if (opposite-directions? current-cord-direction requested-cord-direction) ;dont turn the snake if the new key is the opposite direction
       state
       (assoc state :snake (turn-snake (:snake state) requested-cord-direction)))))
+
+
+(defn key-pressed-handler
+  [state {key-pressed :key}]
+  "Updates the snakes direction flag with the new key press"
+  (core/match [(:alive state) key-pressed]
+              [false :n] (generate-game-state)
+              [true (:or :up :down :right :left)] (move-snake key-pressed state)
+              :else state))
+
 
 
 (defn cord-to-rect
@@ -203,9 +212,9 @@ state
 (q/defsketch snake
              :title "Snake 1, walls kill the snake"
              :size [screen-width screen-height]
-             :setup setup ; setup function called only once, during sketch initialization.
+             :setup setup                                   ; setup function called only once, during sketch initialization.
              :key-pressed key-pressed-handler
-             :update update-state ; update-state is called on each iteration before draw-state.
+             :update update-state                           ; update-state is called on each iteration before draw-state.
              :draw draw-state
              :features [:keep-on-top]
              :middleware [m/fun-mode])
