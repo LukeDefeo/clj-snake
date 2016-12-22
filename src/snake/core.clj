@@ -9,12 +9,9 @@
 ;3. snake 2 rules
 ;4. add abilty to change speed as part of difficulty
 ;5. publish to github
-
+;6. q to quit
 
 ;definitions
-;note snake grid respresented as a kind of x/y cordinate system where each cell is either empty, contains
-;part of the snake or the apple. The grid has bounds defined below. The origin is top left and down
-;is positive in the y axis similar to mobile gui toolkits
 (def grid-width 30)
 (def grid-height 16)
 (def grid-scale-factor 10)
@@ -42,9 +39,6 @@
    :apple (generate-apple)
    :alive true })
 
-;mostly for readability
-
-
 ;snake movement
 
 (def get-head first)
@@ -58,6 +52,20 @@
   [[old-head-x old-head-y] [direction-x direction-y]]
   [(+ old-head-x direction-x) (+ old-head-y direction-y)])
 
+(defn grow-snake-body
+  "Finds the new position the head is moving towrads and adds that to the snakes body, returns the new body"
+  [{:keys [body direction] :as snake}]
+  (let [cur-head (get-head body)
+        new-head (new-head cur-head direction)]
+    (cons new-head body)))
+
+(defn opposite-directions? [[a-x a-y] [b-x b-y]]
+  "checks if two directions would are opposite.
+  Works by adding up the two vectors and checking they equal 0 -
+  this implies the vectors cancel out and the snakes vector velocity is [0 0] which is not allowed"
+  (and
+    (= (+ a-x b-x) 0)
+    (= (+ a-y b-y) 0)))
 
 ;apple
 
@@ -89,60 +97,39 @@
 
 (def alive (complement game-over))
 
-;misc
+;top level state handling
 
-(defn opposite-directions? [[a-x a-y] [b-x b-y]]
-  "checks if two directions would are opposite.
-  Works by adding up the two vectors and checking they equal 0 -
-  this implies the vectors cancel out and the snakes vector velocity is [0 0] which is not allowed"
-  (and
-    (= (+ a-x b-x) 0)
-    (= (+ a-y b-y) 0)))
-
-;quil specific pure functions - update cycle
-
-; update process
-; First check check if the game is running or player dead, if dead do nothing
-; calculate the new position of the of the snake
-; cond
-;     if the head hits a wall, mark the game as ended ,remove the last, update the body with the new
-;     if its the head hits an apple, generate a new apple and, update the body of the snake
-;     if its a free space, remove the last  just update the body with the new
-;
+;quil specific pure functions - game ticks
 
 (defn update-alive [{{body :body} :snake  :as state}]
   (assoc state :alive (alive body)))
 
-(defn grow-snake-body
-  "Finds the new position the head is moving towrads and adds that to the snakes body, returns the new body"
-  [{:keys [body direction] :as snake}]
-  (let [cur-head (get-head body)
-        new-head (new-head cur-head direction)]
-    (cons new-head body)))
-
-(defn update-snake
-  ;TODO  should be called grow snake but already have that, this just does structuring
-  [{snake :snake :as state}]
-  (let [new-body (grow-snake-body snake)]
-    (assoc-in state [:snake :body] new-body)))
-
-(defn update-apple [{apple :apple {body :body} :snake :as state}]
+(defn update-state-apple [{apple :apple {body :body} :snake :as state}]
   "check if snake has eaten the apple, if so generate a new apple, if not cut off the last element to imply movement
   Maybe could have a better name since it also updates the snake if the snake didnt eat the apple"
   (if (snake-eaten-apple (get-head body) apple)
     (assoc state :apple (generate-apple))
     (update-in state [:snake :body] butlast)))
 
-(defn update-state [state]
-  "Moves the snake one unit in the grid in the last pressed direction.
-  Check for game end and if so marks"
-  ;(println "game-state " state)
+(defn update-state-snake-grow
+  ;TODO is this overengineering, it mainly does destructuring and just calls a another method
+  "Updats the state with a snake grown by one,"
+  [{snake :snake :as state}]
+  (let [new-body (grow-snake-body snake)]
+    (assoc-in state [:snake :body] new-body)))
+
+(defn update-state
+  "Orchestrates changes of the game state for one tick for when the snake is alive"
+  [state]
+  (-> state
+      update-state-snake-grow                                     ;move the snake 1 tick
+      update-state-apple                                          ;update the apple or cut the snakes tail
+      update-alive))                                              ;update alive flag
+
+(defn game-tick [state]
+  "Called by quil for every frame"
   (if (:alive state)
-    (-> state
-        update-snake                                        ;move the snake 1 tick
-        update-apple                                        ;update the apple or cut the snakes tail
-        update-alive                                        ;update alive flag
-        )
+    (update-state state)
     state))
 
 ;quil specific pure functions - event handling cycle
@@ -169,11 +156,13 @@
 
 (defn key-pressed-handler
   [state {key-pressed :key}]
-  ""
+  "Top level handler called by quil when a key is pressed"
   (core/match [(:alive state) key-pressed]
               [false :n] (initial-game-state)
               [true (:or :up :down :right :left)] (update-state-snake-turn key-pressed state)
               :else state))
+
+;drawing util
 
 (defn cord-to-rect
   "converts cordinates on the snake grid to a rect to render"
@@ -229,7 +218,7 @@
              :size [screen-width screen-height]
              :setup setup                                   ; setup function called only once, during sketch initialization.
              :key-pressed key-pressed-handler
-             :update update-state                           ; update-state is called on each iteration before draw-state.
+             :update game-tick                           ; update-state is called on each iteration before draw-state.
              :draw draw-state
              :features [:keep-on-top]
              :middleware [m/fun-mode])
