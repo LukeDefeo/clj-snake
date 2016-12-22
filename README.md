@@ -1,6 +1,6 @@
 # snake
 
-A Quil sketch designed to ... well, that part is up to you.
+Implementation of snake using the Quil engine.
 
 ## Usage
 
@@ -12,7 +12,7 @@ REPL - run `(require 'snake.core)`.
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 Luke De Feo
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
