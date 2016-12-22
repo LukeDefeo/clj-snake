@@ -4,11 +4,36 @@
             [clojure.core.match :as core]))
 
 
+
+;problem
+;There seems to be no way to declare multiple vars in a let clause if they both part of a map. e.g
+
+;if
+; make 2 changes to a map which lives in a nested map
+
+
+;use the thread though -> let the map flow though and mutate it multiple times :)
+;is this simular to rop but without the error handling thing
+
+
+;(defn do-it [map]
+;  (if (= (get-in map [:container :x]) "y")
+;    ...))
+
+; now what??? options
+
+;(defn do-it [map]
+;  (if (= (get-in map [:container :x]) "y")
+;    (let [])))
+;
+;(def change-map [param container]
+;  ())
+
 ;todo
 ;1. add apples and growing of the snake
 ;2. add pause feature
 ;3. snake 2 rules
-;4. add abilty to change speed as part of difficultyl
+;4. add abilty to change speed as part of difficulty
 ;5. publish to github
 
 ;definitions
@@ -24,15 +49,14 @@
 ;pure snake functions
 
 (defn generate-apple []
-  {
-   :location [(rand-int grid-width) (rand-int grid-height)]}) ;x/y cords or apple to render
+  [(rand-int grid-width) (rand-int grid-height)]) ;x/y cords or apple to render
 
 (defn generate-snake []
 
   {
    :body      '([3 0] [2 0] [1 0] [0 0])                    ;the snakes position to render starting from head going to the tail
    :direction [1 0]})                                       ;represents direction snake should move on next tick, first
-                                                            ;first column is x direction, second is y, negative y means
+;first column is x direction, second is y, negative y means
 
 (defn generate-game-state []
   {:snake (generate-snake)
@@ -107,25 +131,97 @@
 
 ;quil specific pure functions
 
+(def get-head first)
+
+
+
+(def my-snake {:body [[0 3] [0 2] [0 1]] :direction [0 1]})
+
+(def m {:x 10 :y 2 :s 5})
+
+(defn move-up [{:keys [x y s] :as snake}]
+  (update snake :x inc))
+
+(defn inc-size [{:keys [x y s] :as snake}]
+  (update snake :s inc))
+
+(defn eat-apple [m]
+  (-> m
+      move-up
+      inc-size))
+
+
+(def alive (complement game-over))
+; update process
+; First check check if the game is running or player dead, if dead do nothing
+; calculate the new position of the of the snake
+; cond
+;     if the head hits a wall, mark the game as ended ,remove the last, update the body with the new
+;     if its the head hits an apple, generate a new apple and, update the body of the snake
+;     if its a free space, remove the last  just update the body with the new
+;
+
+(defn update-alive [{{body :body} :snake  :as state}]
+  (assoc state :alive (alive body)))
+
+(update-alive (generate-game-state))
+
+(defn grow-snake-body
+  "Finds the new position the head is moving towrads and adds that to the snakes body, returns the new body"
+  [{:keys [body direction] :as snake}]
+  (let [cur-head (get-head body)
+        new-head (new-head cur-head direction)]
+    (cons new-head body)))
+
+
+(defn update-snake
+  "TODO: should be called grow snake but already have that, this just does structuring"
+  [{snake :snake :as state}]
+  (let [new-body (grow-snake-body snake)]
+    (assoc-in state [:snake :body] new-body)))
+
+(defn snake-eaten-apple [head apple]
+  (= head apple))
+
+(defn update-apple [{apple :apple {body :body} :snake :as state}]
+  "check if snake has eaten the apple, if so generate a new apple, if not cut off the last element to imply movement
+  Maybe could have a better name since it also updates the snake if the snake didnt eat the apple"
+  (if (snake-eaten-apple (get-head body) apple)
+    (assoc state :apple (generate-apple))
+    (update-in state [:snake :body] butlast)))
+
 (defn update-state [state]
   "Moves the snake one unit in the grid in the last pressed direction.
   Check for game end and if so marks"
   ;(println "game-state " state)
   (if (:alive state)
-    (let [moved-state (assoc state :snake (move (:snake state) false))]
-      (assoc moved-state :alive (not (game-over (get-in moved-state [:snake :body]))))) ;need this nested let otherwise snake goes an extra step
+    (-> state
+        update-snake          ;move the snake 1 tick
+        update-apple
+        update-alive)
     state))
 
 
-(def state (generate-game-state))
-state
+;(defn update-state [state]
+;  "Moves the snake one unit in the grid in the last pressed direction.
+;  Check for game end and if so marks"
+;  (cond
+;    (false? (:alive state)) (state)
+;    () ())
+;  (if (:alive state)
+;    (let [moved-state (assoc state :snake (move (:snake state) false))]
+;      (assoc moved-state :alive (not (game-over (get-in moved-state [:snake :body]))))) ;need this nested let otherwise snake goes an extra step
+;    state))
 
-(def sample-map {:a 1 :b 2})
+;(def state (generate-game-state))
+;state
 
-(assoc sample-map :a 2 :b 5 :c 24)
+;(def sample-map {:a 1 :b 2})
 
-(move (:snake state) false)
-(update-state state)
+;(assoc sample-map :a 2 :b 5 :c 24)
+
+;(move (:snake state) false)
+;(update-state state)
 
 (defn key-to-cord-direction [key]
   "converts from quil framework key event to a direction in the snake world"
@@ -142,7 +238,7 @@ state
       state
       (assoc state :snake (turn-snake (:snake state) requested-cord-direction)))))
 
-
+;Check the direction player has last pressed is the opposite to current direction, cant go backwards so do nothing,
 (defn key-pressed-handler
   [state {key-pressed :key}]
   "Updates the snakes direction flag with the new key press"
@@ -213,8 +309,8 @@ state
   ; Clear the previous state by filling it with black color.
   (q/background 0)
   (draw-snake-body (get-in state [:snake :body]))
-  (draw-apple (get-in state [:apple :location]))
-  )
+  (draw-apple (get state :apple)))
+
 
 (defn draw-state [state]
   "draws the current state, main side affect point, the output is ignored"
