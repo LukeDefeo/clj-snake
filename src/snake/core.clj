@@ -1,7 +1,4 @@
-(ns snake.core
-  (:require [quil.core :as q]
-            [quil.middleware :as m]
-            [clojure.core.match :as core]))
+(ns snake.core)
 
 ;TODO things to do
 ;1. add apples and growing of the snake
@@ -10,6 +7,11 @@
 ;4. add abilty to change speed as part of difficulty
 ;5. publish to github
 ;6. q to quit
+
+;BUGS
+;1 if the snake is going to the right and you manae to press down then left before the
+;next frame then the snake will go back on itself which is not allowed. Need a way to detect this
+
 
 ;definitions
 (def grid-width 30)
@@ -96,129 +98,3 @@
     (head-out-of-bounds (first body))))
 
 (def alive (complement game-over))
-
-;top level state handling
-
-;quil specific pure functions - game ticks
-
-(defn update-alive [{{body :body} :snake  :as state}]
-  (assoc state :alive (alive body)))
-
-(defn update-state-apple [{apple :apple {body :body} :snake :as state}]
-  "check if snake has eaten the apple, if so generate a new apple, if not cut off the last element to imply movement
-  Maybe could have a better name since it also updates the snake if the snake didnt eat the apple"
-  (if (snake-eaten-apple (get-head body) apple)
-    (assoc state :apple (generate-apple))
-    (update-in state [:snake :body] butlast)))
-
-(defn update-state-snake-grow
-  ;TODO is this overengineering, it mainly does destructuring and just calls a another method
-  "Updats the state with a snake grown by one,"
-  [{snake :snake :as state}]
-  (let [new-body (grow-snake-body snake)]
-    (assoc-in state [:snake :body] new-body)))
-
-(defn update-state
-  "Orchestrates changes of the game state for one tick for when the snake is alive"
-  [state]
-  (-> state
-      update-state-snake-grow                                     ;move the snake 1 tick
-      update-state-apple                                          ;update the apple or cut the snakes tail
-      update-alive))                                              ;update alive flag
-
-(defn game-tick [state]
-  "Called by quil for every frame"
-  (if (:alive state)
-    (update-state state)
-    state))
-
-;quil specific pure functions - event handling cycle
-
-(defn key-to-cord-direction [key]
-  "converts from quil framework key event to a direction in the snake world"
-  (cond (= key :left) [-1 0]
-        (= key :right) [1 0]
-        (= key :up) [0 -1]
-        (= key :down) [0 1]))
-
-
-(defn update-state-snake-turn
-  ;TODO think of a better fn name.
-  "Updates the snakes direction flag with the new key press, Checks if the direction player has last pressed
-  is the opposite to current direction, cant go backwards so do nothing,"
-  [key-pressed state]
-  (let [requested-cord-direction (key-to-cord-direction key-pressed)
-        current-cord-direction (get-in state [:snake :direction])]
-
-    (if (opposite-directions? current-cord-direction requested-cord-direction) ;dont turn the snake if the new key is the opposite direction
-      state
-      (assoc state :snake (turn-snake (:snake state) requested-cord-direction)))))
-
-(defn key-pressed-handler
-  [state {key-pressed :key}]
-  "Top level handler called by quil when a key is pressed"
-  (core/match [(:alive state) key-pressed]
-              [false :n] (initial-game-state)
-              [true (:or :up :down :right :left)] (update-state-snake-turn key-pressed state)
-              :else state))
-
-;drawing util
-
-(defn cord-to-rect
-  "converts cordinates on the snake grid to a rect to render"
-  [[x y]]
-  (list (* x grid-scale-factor) (* y grid-scale-factor) grid-scale-factor grid-scale-factor))
-
-;quil impure
-
-(defn setup []
-  "setup basic things and returns the initial game state"
-  (q/frame-rate 10)
-  (q/background 0)
-  (initial-game-state))
-
-(defn draw-snake-body
-  "draws the snake at its current position"
-  [body]
-  ;setup fill for the snake
-  (q/fill 100 100 100)
-  (doseq [snake-cord body]
-    (apply q/rect (cord-to-rect snake-cord))))
-
-(defn draw-apple [apple-location]
-  ;setup fill for the apple
-  (q/fill 20 200 80)
-  (apply q/rect (cord-to-rect apple-location)))
-
-(defn draw-game-playing [state]
-  ; Clear the previous state by filling it with black color.
-  (q/background 0)
-  (draw-snake-body (get-in state [:snake :body]))
-  (draw-apple (get state :apple)))
-
-(defn draw-game-over
-  "Shows a prompt saying game over"
-  []
-  ;setup fill for the text
-  (q/fill 200 20 20)
-  (q/text-size 16)
-  (q/rect-mode :center)
-  (q/text-align :center)
-  (q/text "Game over press enter to retry" (/ screen-width 2) (/ screen-height 2) 100 100))
-
-
-(defn draw-state [state]
-  "draws the current state, main side affect point, the output is ignored"
-  (if (:alive state)
-    (draw-game-playing state)
-    (draw-game-over)))
-
-(q/defsketch snake
-             :title "Snake 1, walls kill the snake"
-             :size [screen-width screen-height]
-             :setup setup                                   ; setup function called only once, during sketch initialization.
-             :key-pressed key-pressed-handler
-             :update game-tick                           ; update-state is called on each iteration before draw-state.
-             :draw draw-state
-             :features [:keep-on-top]
-             :middleware [m/fun-mode])
