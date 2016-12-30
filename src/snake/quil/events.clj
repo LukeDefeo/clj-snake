@@ -11,7 +11,6 @@
         (= key :up) [0 -1]
         (= key :down) [0 1]))
 
-
 (defn update-state-snake-turn
   ;TODO think of a better fn name.
   "Updates the snakes direction flag with the new key press, Checks if the direction player has last pressed

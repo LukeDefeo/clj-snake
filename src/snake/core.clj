@@ -1,12 +1,14 @@
 (ns snake.core)
 
 ;TODO things to do
-;1. add apples and growing of the snake
+;1. --done add apples and growing of the snake
 ;2. add pause feature
 ;3. snake 2 rules
 ;4. add abilty to change speed as part of difficulty
 ;5. publish to github
 ;6. q to quit
+;7. fix apples appear in snake bug
+;8. fix snake reversing into itsself bug
 
 ;BUGS
 ;1 if the snake is going to the right and you manae to press down then left before the
@@ -39,7 +41,7 @@
 (defn initial-game-state []
   {:snake (generate-snake)
    :apple (generate-apple)
-   :alive true })
+   :alive true})
 
 ;snake movement
 
