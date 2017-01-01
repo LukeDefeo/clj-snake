@@ -7,7 +7,7 @@
 ;4. add abilty to change speed as part of difficulty
 ;5. publish to github
 ;6. q to quit
-;7. fix apples appear in snake bug
+;7. ------> fix apples appear in snake bug
 ;8. fix snake reversing into itsself bug
 
 ;BUGS
@@ -32,16 +32,30 @@
    :body      '([3 0] [2 0] [1 0] [0 0])
    :direction [1 0]})
 
+;may need to decrement the grid heigh and width here? the apple seems to be always on the snake its the wrong way round
+(def grid
+  (->> (range (* grid-height grid-width))                   ;get a list of numbers one for each cell
+       (map (fn [n]                                         ;convert each into a cord
+              [(int (/ n grid-height))
+               (mod n grid-height)]))
+       set))
+
+
 (defn generate-apple
   ;TODO make apple not generate where the snake already is
   "generate random point for apple"
-  []
-  [(rand-int grid-width) (rand-int grid-height)])
+  [snake]
+  (let [free-cells (vec (clojure.set/difference grid (set snake)))
+        count-free-cells (count free-cells)]
+
+    (get free-cells (rand-int count-free-cells))))
+
 
 (defn initial-game-state []
-  {:snake (generate-snake)
-   :apple (generate-apple)
-   :alive true})
+  (let [snake (generate-snake)]
+    {:snake snake
+     :apple (generate-apple snake)
+     :alive true}))
 
 ;snake movement
 

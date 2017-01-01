@@ -10,7 +10,7 @@
   "check if snake has eaten the apple, if so generate a new apple, if not cut off the last element to imply movement
   Maybe could have a better name since it also updates the snake if the snake didnt eat the apple"
   (if (snake-eaten-apple (get-head body) apple)
-    (assoc state :apple (generate-apple))
+    (assoc state :apple (generate-apple (:snake state)))
     (update-in state [:snake :body] butlast)))
 
 (defn update-state-snake-grow
