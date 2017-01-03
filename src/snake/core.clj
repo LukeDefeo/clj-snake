@@ -5,9 +5,9 @@
 ;2. add pause feature
 ;3. snake 2 rules
 ;4. add abilty to change speed as part of difficulty
-;5. publish to github
+;5. ----> done publish to github
 ;6. q to quit
-;7. ------> fix apples appear in snake bug
+;7. fix apples appear in snake bug
 ;8. fix snake reversing into itsself bug
 
 ;BUGS

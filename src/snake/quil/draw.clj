@@ -27,6 +27,7 @@
 (defn draw-game-playing [state]
   ; Clear the previous state by filling it with black color.
   (q/background 0)
+  (q/rect-mode :corner)
   (draw-snake-body (get-in state [:snake :body]))
   (draw-apple (get state :apple)))
 
